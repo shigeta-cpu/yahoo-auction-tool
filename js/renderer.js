@@ -87,7 +87,16 @@ function getProcessedLogo(logoImg) {
   src.width = w; src.height = h;
   const sctx = src.getContext('2d');
   sctx.drawImage(logoImg, 0, 0);
-  const data = sctx.getImageData(0, 0, w, h);
+  // canvas が汚染（別オリジン画像）だと getImageData が例外。失敗しても描画全体は止めず
+  // ロゴをスキップする（null を返す）。埋め込み base64 なら通常発生しない。
+  let data;
+  try {
+    data = sctx.getImageData(0, 0, w, h);
+  } catch (e) {
+    console.warn('ロゴの透過処理に失敗（canvas taint の可能性）。ロゴなしで描画します。', e);
+    logoImg._processed = null;
+    return null;
+  }
   const px = data.data;
 
   let minX = w, minY = h, maxX = -1, maxY = -1;
@@ -129,9 +138,10 @@ function drawTopBand(ctx, S, band, topPreset, logoImg) {
   const padX = S * 0.03;
   let cursorX = padX;
 
-  // ロゴ描画（高さを帯の 66% に合わせ、アスペクト保持）
-  if (topPreset.logo && logoImg && logoImg.complete && logoImg.naturalWidth) {
-    const logo = getProcessedLogo(logoImg);
+  // ロゴ描画（高さを帯の 66% に合わせ、アスペクト保持）。処理失敗(null)時はロゴをスキップ。
+  const logo = (topPreset.logo && logoImg && logoImg.complete && logoImg.naturalWidth)
+    ? getProcessedLogo(logoImg) : null;
+  if (logo) {
     const logoH = band.h * 0.66;
     const logoW = logoH * (logo.width / logo.height);
     ctx.drawImage(logo, cursorX, cy - logoH / 2, logoW, logoH);

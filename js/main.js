@@ -31,10 +31,12 @@
   };
 
   // ロゴをプリロード（読み込み完了後、写真があれば再描画）
+  // file:// で直接開いても canvas taint が起きないよう、埋め込み base64（logo-data.js）を優先。
+  // 無い場合のみ外部ファイルにフォールバック。
   (function preloadLogo() {
     const logo = new Image();
     logo.onload = () => { state.logoImage = logo; if (state.image) render(); };
-    logo.src = 'assets/logo.png';
+    logo.src = window.LOGO_DATA_URL || 'assets/logo.png';
   })();
 
   // ---- UI 構築 ----
