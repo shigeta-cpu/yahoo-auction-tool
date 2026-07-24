@@ -31,4 +31,13 @@
 
 ## 記録
 
-（まだバグ記録はありません。修正のたびにここへ追記してください）
+### [2026-07-24] file:// で開くとロゴのcanvas taintで描画が全く出ない
+- 症状: 配布ZIPを解凍し `index.html` をダブルクリック（file://）で開くと、写真を選んでもプレビューが生成されない（placeholderのまま・ダウンロード無効）。HTTPサーバー経由では正常。
+- 原因: `getProcessedLogo` の `getImageData`（ロゴ輝度→アルファ変換）で、file:// から読み込んだ `assets/logo.png` が「別オリジン（null origin）」扱いになり canvas が汚染（taint）。SecurityError を投げ `renderSquare` が例外終了 → render() が途中で止まり canvas が表示されない。
+- 修正:
+  - ロゴを base64 データURIで埋め込み（`js/logo-data.js` の `window.LOGO_DATA_URL`）、`index.html` で最初に読込。`js/main.js` preloadLogo は `window.LOGO_DATA_URL || 'assets/logo.png'`。データURIは同一オリジン扱いで canvas を汚染しない。
+  - `js/renderer.js` `getProcessedLogo`: `getImageData` を try/catch し、失敗時は null を返す。`drawTopBand` は logo が null ならロゴをスキップ（描画全体は止めない）。
+- 再発防止:
+  - **オフライン/ローカル配布するアプリで getImageData / toBlob / toDataURL を使う画像は、外部ファイル参照ではなく base64 データURIで埋め込む**（file:// の cross-origin taint 回避）。
+  - 検証は HTTP サーバーだけでなく、**配布ZIPを解凍して file:// でも動作確認する**こと。
+  - canvas のピクセル読み取り処理は try/catch で保護し、失敗しても画面全体を巻き添えにしない。

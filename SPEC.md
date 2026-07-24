@@ -95,7 +95,9 @@
 - **ロゴ＋ジムニーリユースパーツ**（黄背景）: 左に C.L.LINK ロゴ、右に「ジムニーリユースパーツ」黒文字
 - 上帯なし
 - ロゴ素材: `assets/logo.png`（C.L.LINK CUSTOM PARTS ロゴPDFを高解像度PNG化）
-- ロゴは描画時に輝度→アルファ変換で白背景を透過し、余白をトリミングして黄色帯に直接配置（renderer.js `getProcessedLogo`）
+- **配布・オフライン対応**: ロゴは base64 データURIとして `js/logo-data.js`（`window.LOGO_DATA_URL`）に埋め込み、`main.js` はこれを優先読込（無ければ `assets/logo.png`）。
+  - 理由: `index.html` を file:// で直接開くと、外部ファイル読込のロゴが cross-origin 扱いになり `getImageData` が canvas taint で例外→描画停止するため。データURIなら同一オリジン扱いで汚染しない。詳細は error-catalog [2026-07-24]。
+- ロゴは描画時に輝度→アルファ変換で白背景を透過し、余白をトリミングして黄色帯に直接配置（renderer.js `getProcessedLogo`）。`getImageData` は try/catch で保護し、失敗時はロゴのみスキップ（描画全体は止めない）。
 
 ### 下帯バッジ（項目ごとに選択・選択漏れ防止UI）
 項目（`js/presets.js` `BADGE_CATEGORIES`）:

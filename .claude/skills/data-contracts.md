@@ -46,6 +46,7 @@
 | none | 上帯なし | — | — | 白 | 帯なし（1:1は維持） |
 
 - ロゴは黒ロゴ→輝度アルファ変換で透過し余白トリミングして描画（`getProcessedLogo`）。
+- ロゴ画像は base64 データURIで `js/logo-data.js`（`window.LOGO_DATA_URL`）に埋め込み、`main.js` が優先読込（file:// で開いた際の canvas taint 回避のため。error-catalog [2026-07-24] 参照）。`getImageData` は try/catch 保護。
 
 ### 下帯（バッジ帯）— 項目ごと選択・テキストのみ（マークなし）
 | キー | ラベル | タイプ | 選択肢 | バッジ表記 |
