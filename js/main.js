@@ -21,8 +21,9 @@
     topKey: TOP_PRESETS[0].key,   // 選択中の上帯キー
     bottom: {
       condition: null,           // '中古' | '未使用' | null
-      rank: null,                // 'A' | 'B' | 'C' | null
+      rank: null,                // 'SS' | 'S' | 'A' | 'B' | 'C' | 'D' | null
       tire: null,                // 'サマー' | 'スタッドレス' | null
+      year: [],                  // 製造年数（複数・最大4）
       model: [],                 // 適合型式（最大4）
       guarantee: true,           // 保証付（全商品強制・常時ON）
       bihin: false,              // 美品
@@ -159,6 +160,13 @@
     if (b.condition) out.push({ color: C.condition, lines: [{ t: '状態', r: 0.16, w: '600' }, { t: b.condition, r: 0.30, w: '800' }] });
     if (b.rank) out.push({ color: C.rank, lines: [{ t: 'ランク', r: 0.16, w: '600' }, { t: b.rank, r: 0.52, w: '900' }] });
     if (b.tire) out.push({ color: C.tire, lines: [{ t: 'タイヤ', r: 0.16, w: '600' }, { t: b.tire, r: 0.24, w: '800' }] });
+    if (b.year.length) {
+      const c = b.year.length;
+      const yr = c === 1 ? 0.30 : c === 2 ? 0.22 : c === 3 ? 0.18 : 0.15;
+      const lines = [{ t: '製造年', r: 0.15, w: '600' }];
+      b.year.forEach((y) => lines.push({ t: y, r: yr, w: '800' }));
+      out.push({ color: C.year, lines });
+    }
     if (b.model.length) {
       const c = b.model.length;
       const mr = c === 1 ? 0.34 : c === 2 ? 0.24 : c === 3 ? 0.19 : 0.16;

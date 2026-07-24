@@ -18,13 +18,15 @@ const TOP_PRESETS = [
 //   multi  … 複数選択（max 個まで）。選択型式を 1 バッジに集約
 //   forced … 全商品強制表示（常に ON・非トグル）
 //   toggle … ON/OFF（その他バッジ）
-const MODEL_OPTIONS = ['JA11', 'JB31', 'JA22', 'JB32', 'JB23', 'JB33', 'JB43', 'JB64', 'JB74', 'JC74'];
+const MODEL_OPTIONS = ['JA11', 'JB31', 'JA22', 'JB32', 'JB23', 'JB33', 'JB43', 'JB64', 'JB74', 'JC74', '汎用'];
+const YEAR_OPTIONS = ['2027年', '2026年', '2025年', '2024年', '2023年', '2022年'];
 
-// バッジ表示順（左→右。5個未満は全体を右詰め）
+// バッジ表示順（左→右。5個未満は全体をセンター寄せ）
 const BADGE_CATEGORIES = [
-  { key: 'condition', label: '状態',        group: 'main',  type: 'single', options: ['中古', '未使用'] },
-  { key: 'rank',      label: 'ランク',      group: 'main',  type: 'single', options: ['A', 'B', 'C'] },
+  { key: 'condition', label: '状態',        group: 'main',  type: 'single', options: ['中古', '未使用', 'アウトレット', '新品'] },
+  { key: 'rank',      label: 'ランク',      group: 'main',  type: 'single', options: ['SS', 'S', 'A', 'B', 'C', 'D'] },
   { key: 'tire',      label: 'タイヤの種類', group: 'main',  type: 'single', options: ['サマー', 'スタッドレス'] },
+  { key: 'year',      label: '製造年数',    group: 'main',  type: 'multi',  max: 4, options: YEAR_OPTIONS },
   { key: 'model',     label: '適合型式',    group: 'main',  type: 'multi',  max: 4, options: MODEL_OPTIONS },
   { key: 'guarantee', label: '保証付',      group: 'main',  type: 'forced' },
   { key: 'bihin',     label: '美品',        group: 'other', type: 'toggle' },
@@ -40,6 +42,7 @@ const BADGE_COLORS = {
   condition: '#0f9d8f', // 状態     … ティール
   rank:      '#c0392b', // ランク   … クリムゾン（参考=銀と差別化）
   tire:      '#2563c9', // タイヤ   … ロイヤルブルー（参考=橙と差別化）
+  year:      '#8e44ad', // 製造年数 … アメジスト（他カテゴリと差別化）
   model:     '#5b4bc4', // 適合型式 … インディゴ
   guarantee: '#1f9a4d', // 保証付   … グリーン（信頼色）
   bihin:     '#c2317f', // 美品     … マゼンタ（参考=紫から寄せすぎない）
@@ -47,4 +50,4 @@ const BADGE_COLORS = {
 };
 
 // export（module 不使用・グローバル参照）
-window.PRESETS = { TOP_PRESETS, BADGE_CATEGORIES, MODEL_OPTIONS, BADGE_MAX_SLOTS, BADGE_COLORS };
+window.PRESETS = { TOP_PRESETS, BADGE_CATEGORIES, MODEL_OPTIONS, YEAR_OPTIONS, BADGE_MAX_SLOTS, BADGE_COLORS };
