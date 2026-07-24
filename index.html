@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ヤフオク画像メーカー</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>ヤフオク画像メーカー</h1>
+    <p class="sub">16:9 の写真を、帯付きの正方形（1:1）画像にします</p>
+  </header>
+
+  <main class="layout">
+    <!-- 左: 操作パネル -->
+    <section class="panel">
+      <!-- 1. 画像アップロード -->
+      <div class="step">
+        <h2><span class="num">1</span> 写真を選ぶ</h2>
+        <div id="dropZone" class="drop-zone">
+          <p>ここに写真をドラッグ＆ドロップ<br>または</p>
+          <label class="btn btn-primary">
+            写真を選択
+            <input type="file" id="fileInput" accept="image/*" hidden>
+          </label>
+          <p id="fileName" class="file-name"></p>
+        </div>
+      </div>
+
+      <!-- 2. 上帯 -->
+      <div class="step">
+        <h2><span class="num">2</span> 上帯（キャッチコピー）</h2>
+        <div id="topPresetList" class="choice-list"></div>
+      </div>
+
+      <!-- 3. 下帯バッジ -->
+      <div class="step">
+        <h2><span class="num">3</span> 下帯バッジ（項目ごとに選択）</h2>
+        <p class="step-note">各項目を選んでください（バッジは最大5個・右詰め表示）</p>
+        <div id="badgeList" class="badge-cats"></div>
+      </div>
+
+      <!-- 4. ダウンロード -->
+      <div class="step">
+        <h2><span class="num">4</span> 保存</h2>
+        <button id="downloadBtn" class="btn btn-download" disabled>高解像度 PNG をダウンロード</button>
+      </div>
+    </section>
+
+    <!-- 右: プレビュー -->
+    <section class="preview-area">
+      <h2>プレビュー</h2>
+      <div class="preview-frame">
+        <canvas id="previewCanvas"></canvas>
+        <p id="placeholder" class="placeholder">写真を選ぶとここに表示されます</p>
+      </div>
+      <p id="sizeInfo" class="size-info"></p>
+    </section>
+  </main>
+
+  <script src="js/presets.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
