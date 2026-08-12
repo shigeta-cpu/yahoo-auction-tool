@@ -9,26 +9,19 @@ const LAYOUT = {
   // 写真部 = 1 - TOP - BOTTOM（renderSquare で算出）
 };
 
-// 元画像を写真領域に「切り抜きフィット（cover）」で描く。
-// 16:9 入力なら等倍・無変形。ずれた比率でも歪めず、はみ出し分だけ中央基準で切り取る。
-function drawPhotoCover(ctx, img, dx, dy, dw, dh) {
-  const imgRatio = img.naturalWidth / img.naturalHeight;
-  const boxRatio = dw / dh;
-  let sx, sy, sw, sh;
-  if (imgRatio > boxRatio) {
-    // 画像が横長 → 左右を切る
-    sh = img.naturalHeight;
-    sw = sh * boxRatio;
-    sx = (img.naturalWidth - sw) / 2;
-    sy = 0;
-  } else {
-    // 画像が縦長 → 上下を切る
-    sw = img.naturalWidth;
-    sh = sw / boxRatio;
-    sx = 0;
-    sy = (img.naturalHeight - sh) / 2;
-  }
-  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+// 元画像を写真領域に「全体表示（contain / レターボックス）」で描く。
+// 画像全体を切り取らずに収める。写真領域と比率が異なる余白は背景色で埋める（中央配置）。
+// 写真領域は S×(1-上帯-下帯) で 16:9 より横長ではないため、cover だと左右が切れてしまう。
+// 全体表示を優先し、上下に余白（白）が入っても画像の端は切らない。歪めない。
+function drawPhotoContain(ctx, img, dx, dy, dw, dh, bg) {
+  ctx.fillStyle = bg || '#ffffff';
+  ctx.fillRect(dx, dy, dw, dh);
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const scale = Math.min(dw / iw, dh / ih);
+  const w = iw * scale, h = ih * scale;
+  const x = dx + (dw - w) / 2;
+  const y = dy + (dh - h) / 2;
+  ctx.drawImage(img, 0, 0, iw, ih, x, y, w, h);
 }
 
 // 角丸矩形パス
@@ -286,7 +279,7 @@ function renderSquare(canvas, img, options) {
 
   // 描画順: 帯背景 → 写真 → バッジ・文字
   drawTopBand(ctx, S, topBand, options.topPreset, options.logoImage);
-  drawPhotoCover(ctx, img, 0, photo.y, S, photo.h);
+  drawPhotoContain(ctx, img, 0, photo.y, S, photo.h, '#ffffff');
   drawBottomBand(ctx, S, bottomBand, options.badges || []);
 
   return canvas;

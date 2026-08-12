@@ -211,7 +211,7 @@
       // 16:9 から大きくずれていたら警告（切り抜きで対応する旨）
       const ratio = img.naturalWidth / img.naturalHeight;
       if (Math.abs(ratio - 16 / 9) > 0.2) {
-        console.warn(`元画像の比率が 16:9 から外れています（${ratio.toFixed(2)}）。中央基準で切り抜きます。`);
+        console.warn(`元画像の比率が 16:9 から外れています（${ratio.toFixed(2)}）。全体を表示し、余白は白で埋めます。`);
       }
       render();
     };
