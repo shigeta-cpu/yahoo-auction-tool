@@ -189,7 +189,7 @@
     canvas.style.display = 'block';
     placeholder.style.display = 'none';
     downloadBtn.disabled = false;
-    let info = `出力サイズ: ${canvas.width} × ${canvas.height} px（PNG）`;
+    let info = `出力サイズ: ${canvas.width} × ${canvas.height} px（JPG・高品質）`;
     if (badges.length > BADGE_MAX_SLOTS) {
       info += `　※バッジ${badges.length}個（5個超のため自動縮小して表示）`;
     }
@@ -231,15 +231,16 @@
   });
 
   downloadBtn.addEventListener('click', () => {
-    // PNG（可逆・劣化なし）で出力
+    // ヤフオクは gif/jpg のみ対応のため JPG で出力。
+    // 品質 0.95（★暫定）で高画質を維持（解像度は実ピクセルのまま・劣化はほぼ視認不可）。
     canvas.toBlob((blob) => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '');
-      a.download = `yahoo-auction-${stamp}.png`;
+      a.download = `yahoo-auction-${stamp}.jpg`;
       a.click();
       URL.revokeObjectURL(a.href);
-    }, 'image/png');
+    }, 'image/jpeg', 0.95);
   });
 
   // 初期化
