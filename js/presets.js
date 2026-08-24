@@ -26,6 +26,8 @@ const BADGE_CATEGORIES = [
   { key: 'condition', label: '状態',        group: 'main',  type: 'single', options: ['中古', '未使用', 'アウトレット', '新品'] },
   { key: 'rank',      label: 'ランク',      group: 'main',  type: 'single', options: ['SS', 'S', 'A', 'B', 'C', 'D'] },
   { key: 'tire',      label: 'タイヤの種類', group: 'main',  type: 'single', options: ['サマー', 'スタッドレス'] },
+  { key: 'usage',     label: '使用年数',    group: 'main',  type: 'single', options: ['1ヶ月未満', '半年未満', '1年未満', '1～2年', '3～5年', '5年以上', '不明'] },
+  { key: 'mileage',   label: '走行距離',    group: 'main',  type: 'single', options: ['テスト走行程度', '～1,000km', '～5,000km', '～20,000km', '20,000km～', '不明'] },
   { key: 'year',      label: '製造年数',    group: 'main',  type: 'multi',  max: 4, options: YEAR_OPTIONS },
   { key: 'model',     label: '適合型式',    group: 'main',  type: 'multi',  max: 4, options: MODEL_OPTIONS },
   { key: 'guarantee', label: '保証付',      group: 'main',  type: 'forced' },
@@ -42,6 +44,8 @@ const BADGE_COLORS = {
   condition: '#0f9d8f', // 状態     … ティール
   rank:      '#c0392b', // ランク   … クリムゾン（参考=銀と差別化）
   tire:      '#2563c9', // タイヤ   … ロイヤルブルー（参考=橙と差別化）
+  usage:     '#5d6d7e', // 使用年数 … スレートグレー
+  mileage:   '#0e8ba8', // 走行距離 … シアン
   year:      '#8e44ad', // 製造年数 … アメジスト（他カテゴリと差別化）
   model:     '#5b4bc4', // 適合型式 … インディゴ
   guarantee: '#1f9a4d', // 保証付   … グリーン（信頼色）

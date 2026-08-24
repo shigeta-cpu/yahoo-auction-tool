@@ -23,6 +23,8 @@
       condition: null,           // '中古' | '未使用' | null
       rank: null,                // 'SS' | 'S' | 'A' | 'B' | 'C' | 'D' | null
       tire: null,                // 'サマー' | 'スタッドレス' | null
+      usage: null,               // 使用年数（択一）
+      mileage: null,             // 走行距離（択一）
       year: [],                  // 製造年数（複数・最大4）
       model: [],                 // 適合型式（最大4）
       guarantee: true,           // 保証付（全商品強制・常時ON）
@@ -160,6 +162,8 @@
     if (b.condition) out.push({ color: C.condition, lines: [{ t: '状態', r: 0.16, w: '600' }, { t: b.condition, r: 0.30, w: '800' }] });
     if (b.rank) out.push({ color: C.rank, lines: [{ t: 'ランク', r: 0.16, w: '600' }, { t: b.rank, r: 0.52, w: '900' }] });
     if (b.tire) out.push({ color: C.tire, lines: [{ t: 'タイヤ', r: 0.16, w: '600' }, { t: b.tire, r: 0.24, w: '800' }] });
+    if (b.usage) out.push({ color: C.usage, lines: [{ t: '使用年数', r: 0.14, w: '600' }, { t: b.usage, r: 0.22, w: '800' }] });
+    if (b.mileage) out.push({ color: C.mileage, lines: [{ t: '走行距離', r: 0.14, w: '600' }, { t: b.mileage, r: 0.18, w: '800' }] });
     if (b.year.length) {
       const c = b.year.length;
       const yr = c === 1 ? 0.30 : c === 2 ? 0.22 : c === 3 ? 0.18 : 0.15;
