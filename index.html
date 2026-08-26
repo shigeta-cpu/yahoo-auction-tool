@@ -57,11 +57,22 @@
         <canvas id="previewCanvas"></canvas>
         <p id="placeholder" class="placeholder">写真を選ぶとここに表示されます</p>
       </div>
+      <div id="photoControls" class="photo-controls" style="display:none;">
+        <span class="pc-label">写真の大きさ・位置</span>
+        <div class="pc-row">
+          <button type="button" id="zoomOut" class="pc-btn" aria-label="縮小">－</button>
+          <input type="range" id="zoomRange" min="1" max="6" step="0.01" value="1">
+          <button type="button" id="zoomIn" class="pc-btn" aria-label="拡大">＋</button>
+          <button type="button" id="zoomReset" class="pc-btn pc-reset">リセット</button>
+        </div>
+        <p class="pc-hint">写真をドラッグで移動、スライダーで拡大縮小できます</p>
+      </div>
       <p id="sizeInfo" class="size-info"></p>
     </section>
   </main>
 
   <script src="js/logo-data.js"></script>
+  <script src="js/topband-data.js"></script>
   <script src="js/presets.js"></script>
   <script src="js/renderer.js"></script>
   <script src="js/main.js"></script>

@@ -13,11 +13,18 @@
   const canvas = document.getElementById('previewCanvas');
   const placeholder = document.getElementById('placeholder');
   const sizeInfo = document.getElementById('sizeInfo');
+  const photoControls = document.getElementById('photoControls');
+  const zoomRange = document.getElementById('zoomRange');
+  const zoomIn = document.getElementById('zoomIn');
+  const zoomOut = document.getElementById('zoomOut');
+  const zoomReset = document.getElementById('zoomReset');
 
   // 状態
   const state = {
     image: null,                 // 読み込み済み Image（元画像を保持・劣化させない）
+    view: null,                  // 写真の表示変換 { base, scale, cx, cy }（ドラッグ移動＋拡大縮小）
     logoImage: null,             // C.L.LINK ロゴ（上帯用にプリロード）
+    bandImage: null,             // ブランド上帯のリファレンス完全一致画像（プリロード）
     topKey: TOP_PRESETS[0].key,   // 選択中の上帯キー
     bottom: {
       condition: null,           // '中古' | '未使用' | null
@@ -40,6 +47,15 @@
     const logo = new Image();
     logo.onload = () => { state.logoImage = logo; if (state.image) render(); };
     logo.src = window.LOGO_DATA_URL || 'assets/logo.png';
+  })();
+
+  // ブランド上帯のリファレンス完全一致画像（4000x456・左寄せ短縮版・base64埋め込み）をプリロード。
+  // 帯はこの画像を貼るだけ＝フォント非依存で Mac/Windows/オフラインでも同一表示。
+  (function preloadBand() {
+    if (!window.TOPBAND_DATA_URL) return;
+    const band = new Image();
+    band.onload = () => { state.bandImage = band; if (state.image) render(); };
+    band.src = window.TOPBAND_DATA_URL;
   })();
 
   // ---- UI 構築 ----
@@ -189,7 +205,7 @@
     if (!state.image) return;
     const topPreset = TOP_PRESETS.find((p) => p.key === state.topKey);
     const badges = collectBadges();
-    renderSquare(canvas, state.image, { topPreset, badges, logoImage: state.logoImage });
+    renderSquare(canvas, state.image, { topPreset, badges, logoImage: state.logoImage, bandImage: state.bandImage, view: state.view });
     canvas.style.display = 'block';
     placeholder.style.display = 'none';
     downloadBtn.disabled = false;
@@ -212,11 +228,10 @@
     img.onload = () => {
       URL.revokeObjectURL(url);
       state.image = img;
-      // 16:9 から大きくずれていたら警告（切り抜きで対応する旨）
-      const ratio = img.naturalWidth / img.naturalHeight;
-      if (Math.abs(ratio - 16 / 9) > 0.2) {
-        console.warn(`元画像の比率が 16:9 から外れています（${ratio.toFixed(2)}）。全体を表示し、余白は白で埋めます。`);
-      }
+      // どんなサイズ・比率でも可。初期は全体表示（余白あり）。以降ドラッグ＋スライダーで調整。
+      state.view = window.RENDERER.getDefaultView(img, img.naturalWidth);
+      zoomRange.value = '1';
+      photoControls.style.display = 'block';
       render();
     };
     img.onerror = () => alert('画像を読み込めませんでした');
@@ -245,6 +260,55 @@
       a.click();
       URL.revokeObjectURL(a.href);
     }, 'image/jpeg', 0.95);
+  });
+
+  // ---- 写真のドラッグ移動＋拡大縮小 ----
+  // プレビューは縮小表示されるため、client座標の移動量を canvas ピクセルへ換算する係数。
+  function canvasScale() {
+    const rect = canvas.getBoundingClientRect();
+    return rect.width ? canvas.width / rect.width : 1;
+  }
+
+  let dragging = false, lastX = 0, lastY = 0;
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!state.image) return;
+    dragging = true;
+    canvas.classList.add('grabbing');
+    lastX = e.clientX; lastY = e.clientY;
+    if (canvas.setPointerCapture && e.pointerId != null) canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dragging || !state.view) return;
+    const k = canvasScale();
+    state.view.cx += (e.clientX - lastX) * k;
+    state.view.cy += (e.clientY - lastY) * k;
+    lastX = e.clientX; lastY = e.clientY;
+    if (e.cancelable) e.preventDefault();
+    render();
+  });
+  const endDrag = () => { dragging = false; canvas.classList.remove('grabbing'); };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  // スライダー: 実倍率 = 基準倍率(base) × ズーム。画像中心位置(cx,cy)は保持し中心を軸に拡大縮小。
+  function applyZoom(zoom) {
+    if (!state.view) return;
+    state.view.scale = state.view.base * zoom;
+    render();
+  }
+  zoomRange.addEventListener('input', () => applyZoom(parseFloat(zoomRange.value)));
+  function nudgeZoom(delta) {
+    const z = Math.min(6, Math.max(1, parseFloat(zoomRange.value) + delta));
+    zoomRange.value = String(z);
+    applyZoom(z);
+  }
+  zoomIn.addEventListener('click', () => nudgeZoom(0.2));
+  zoomOut.addEventListener('click', () => nudgeZoom(-0.2));
+  zoomReset.addEventListener('click', () => {
+    if (!state.image) return;
+    state.view = window.RENDERER.getDefaultView(state.image, state.image.naturalWidth);
+    zoomRange.value = '1';
+    render();
   });
 
   // 初期化

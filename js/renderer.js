@@ -4,24 +4,45 @@
 // レイアウト比率（S に対する割合）— 暫定値。目視で調整して data-contracts に確定記録する。
 // 上帯はロゴ帯として細く（参考画像準拠）。減らした分は写真部に回し 1:1 を維持（写真は cover 描画）。
 const LAYOUT = {
-  TOP_BAND_RATIO: 0.10,     // ロゴ+ブランド名の細い帯
+  TOP_BAND_RATIO: 0.114,    // ブランド帯画像(4000x456・左寄せ短縮版)のアスペクト比に一致（歪みゼロ）
   BOTTOM_BAND_RATIO: 0.21,  // 正方形バッジ（5個固定サイズ）が収まる高さ
   // 写真部 = 1 - TOP - BOTTOM（renderSquare で算出）
 };
 
-// 元画像を写真領域に「全体表示（contain / レターボックス）」で描く。
-// 画像全体を切り取らずに収める。写真領域と比率が異なる余白は背景色で埋める（中央配置）。
-// 写真領域は S×(1-上帯-下帯) で 16:9 より横長ではないため、cover だと左右が切れてしまう。
-// 全体表示を優先し、上下に余白（白）が入っても画像の端は切らない。歪めない。
-function drawPhotoContain(ctx, img, dx, dy, dw, dh, bg) {
-  ctx.fillStyle = bg || '#ffffff';
-  ctx.fillRect(dx, dy, dw, dh);
+// 写真領域のジオメトリ（S に対する固定比率）を算出。ドラッグ操作の座標計算にも共用する。
+function computeLayout(S) {
+  const topH = Math.round(S * LAYOUT.TOP_BAND_RATIO);
+  const bottomH = Math.round(S * LAYOUT.BOTTOM_BAND_RATIO);
+  const photoH = S - topH - bottomH;
+  return { S, topH, bottomH, photoH, photo: { y: topH, h: photoH } };
+}
+
+// 初期表示の view（全体表示=contain・中央配置）を返す。
+// view = { base, scale, cx, cy }
+//   base : 全体が収まる基準倍率（スライダー1.0の位置）
+//   scale: 実際の描画倍率（= base * ズーム）
+//   cx,cy: 画像中心の canvas 座標（ドラッグ移動で変化）
+function getDefaultView(img, S) {
+  const L = computeLayout(S);
   const iw = img.naturalWidth, ih = img.naturalHeight;
-  const scale = Math.min(dw / iw, dh / ih);
-  const w = iw * scale, h = ih * scale;
-  const x = dx + (dw - w) / 2;
-  const y = dy + (dh - h) / 2;
-  ctx.drawImage(img, 0, 0, iw, ih, x, y, w, h);
+  const base = Math.min(L.S / iw, L.photoH / ih); // 全体が収まる倍率
+  return { base, scale: base, cx: L.S / 2, cy: L.photo.y + L.photoH / 2 };
+}
+
+// 写真を view（倍率・中心位置）で写真領域に描く。領域を白で埋め、はみ出しは領域にクリップする。
+// どんなサイズ・比率でも、ユーザーがドラッグ移動＋拡大縮小した通りに描画し、
+// 領域外にはみ出した部分は出力（正方形）でも同様に切り取られる。歪めない。
+function drawPhoto(ctx, img, region, view, bg) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(region.x, region.y, region.w, region.h);
+  ctx.clip();
+  ctx.fillStyle = bg || '#ffffff';
+  ctx.fillRect(region.x, region.y, region.w, region.h);
+  const dw = img.naturalWidth * view.scale;
+  const dh = img.naturalHeight * view.scale;
+  ctx.drawImage(img, view.cx - dw / 2, view.cy - dh / 2, dw, dh);
+  ctx.restore();
 }
 
 // 角丸矩形パス
@@ -120,11 +141,20 @@ function getProcessedLogo(logoImg) {
 }
 
 // 上帯（ロゴ帯）描画: 黄色背景 + 左にロゴ + その右にブランド名
-function drawTopBand(ctx, S, band, topPreset, logoImg) {
+function drawTopBand(ctx, S, band, topPreset, logoImg, bandImg) {
   if (!topPreset || topPreset.key === 'none') {
     drawBand(ctx, 0, band.y, S, band.h, '#ffffff'); // 帯なしは白（1:1は維持）
     return;
   }
+
+  // ブランド帯はリファレンス完全一致の帯画像（4000x555）をそのまま貼る。
+  // フォント非依存＝Mac/Windows/オフラインで同一表示。帯比率は画像アスペクトに一致させ歪めない。
+  if (topPreset.key === 'brand' && bandImg && bandImg.complete && bandImg.naturalWidth) {
+    ctx.drawImage(bandImg, 0, band.y, S, band.h);
+    return;
+  }
+
+  // フォールバック（帯画像が未ロードの場合のみ）: 従来のロゴ+テキスト描画。
   drawBand(ctx, 0, band.y, S, band.h, topPreset.bg);
 
   const cy = band.y + band.h / 2;
@@ -258,7 +288,8 @@ function drawBottomBand(ctx, S, band, badges) {
 }
 
 // メイン: canvas に正方形画像を描画する
-// options = { topPreset, badges:[{icon,text,bg,fg}], logoImage }
+// options = { topPreset, badges, logoImage, view }
+//   view 省略時は全体表示（getDefaultView）で描画する。
 function renderSquare(canvas, img, options) {
   const S = img.naturalWidth; // 出力 1 辺 = 元画像実幅（写真を等倍で保持）
   canvas.width = S;
@@ -269,20 +300,18 @@ function renderSquare(canvas, img, options) {
   ctx.imageSmoothingQuality = 'high';
 
   // 各領域の高さ（px）。写真部は残り（端数を吸収し合計を厳密に S にする）。
-  const topH = Math.round(S * LAYOUT.TOP_BAND_RATIO);
-  const bottomH = Math.round(S * LAYOUT.BOTTOM_BAND_RATIO);
-  const photoH = S - topH - bottomH;
-
-  const topBand = { y: 0, h: topH };
-  const photo = { y: topH, h: photoH };
-  const bottomBand = { y: topH + photoH, h: bottomH };
+  const L = computeLayout(S);
+  const topBand = { y: 0, h: L.topH };
+  const bottomBand = { y: L.topH + L.photoH, h: L.bottomH };
+  const region = { x: 0, y: L.photo.y, w: S, h: L.photoH };
+  const view = options.view || getDefaultView(img, S);
 
   // 描画順: 帯背景 → 写真 → バッジ・文字
-  drawTopBand(ctx, S, topBand, options.topPreset, options.logoImage);
-  drawPhotoContain(ctx, img, 0, photo.y, S, photo.h, '#ffffff');
+  drawTopBand(ctx, S, topBand, options.topPreset, options.logoImage, options.bandImage);
+  drawPhoto(ctx, img, region, view, '#ffffff');
   drawBottomBand(ctx, S, bottomBand, options.badges || []);
 
   return canvas;
 }
 
-window.RENDERER = { renderSquare, LAYOUT };
+window.RENDERER = { renderSquare, LAYOUT, computeLayout, getDefaultView };
